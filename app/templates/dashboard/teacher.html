@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Console | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-dark">Teacher Management Dashboard</h2>
+    <p class="text-muted">Welcome back, <b>{{ teacher.full_name }}</b>. Manage your assigned courses, students, and grading sheets.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-lg-4">
+        <div class="card h-100 bg-white">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-solid fa-address-card me-2 text-info"></i>Instructor Profile</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="avatar bg-info text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-3" style="width: 70px; height: 70px;">
+                        {{ teacher.first_name[0] }}{{ teacher.last_name[0] }}
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="mb-0 fw-bold">{{ teacher.full_name }}</h5>
+                        <p class="text-muted small mb-0">{{ teacher.department }} Department</p>
+                    </div>
+                </div>
+                
+                <table class="table table-borderless table-sm small">
+                    <tr>
+                        <td class="fw-semibold text-muted" style="width: 120px;">Employee ID:</td>
+                        <td class="text-dark">{{ teacher.employee_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Specialization:</td>
+                        <td class="text-dark">{{ teacher.specialization or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Phone:</td>
+                        <td class="text-dark">{{ teacher.phone or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Email:</td>
+                        <td class="text-dark">{{ current_user.email }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Courses Grid -->
+    <div class="col-lg-8">
+        <div class="card h-100 bg-white">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-book-bookmark me-2 text-warning"></i>Assigned Syllabus & Courses</h5>
+                <span class="badge bg-primary">{{ courses | length }} Courses</span>
+            </div>
+            <div class="card-body">
+                {% if courses %}
+                <div class="row g-3">
+                    {% for course in courses %}
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100 bg-light d-flex flex-column justify-content-between hover-shadow">
+                            <div>
+                                <span class="badge bg-secondary mb-2">{{ course.course_code }}</span>
+                                <h6 class="fw-bold text-dark mb-1">{{ course.course_name }}</h6>
+                                <p class="text-muted small mb-3">Credits: {{ course.credit_hours }} | Semester: {{ course.semester }}</p>
+                            </div>
+                            <div class="d-flex gap-2 mt-auto">
+                                <a href="{{ url_for('attendance.record', course_id=course.id) }}" class="btn btn-outline-success btn-sm flex-fill">
+                                    <i class="fa-solid fa-calendar-check me-1"></i>Attendance
+                                </a>
+                                <a href="{{ url_for('marks.record', course_id=course.id) }}" class="btn btn-outline-warning btn-sm flex-fill text-dark">
+                                    <i class="fa-solid fa-star me-1"></i>Grades
+                                </a>
+                                <a href="{{ url_for('courses.details', id=course.id) }}" class="btn btn-outline-primary btn-sm" title="Course Registry">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fa-solid fa-chalkboard fs-1 mb-3"></i>
+                    <p class="mb-0">You are not currently assigned to any courses. Please contact the administrator.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

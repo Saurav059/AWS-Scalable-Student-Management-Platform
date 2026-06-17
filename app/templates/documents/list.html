@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}My Files | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-dark mb-1">My Certificate & Document Vault</h2>
+    <p class="text-muted">Upload and manage your credentials. Stored securely on AWS S3 / Local storage.</p>
+</div>
+
+<div class="card bg-white shadow-sm max-width-container" style="max-width: 900px;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-folder-open me-2 text-info"></i>Personal Attachments Registry</h5>
+        <span class="badge bg-secondary">{{ student.documents | length }} Files</span>
+    </div>
+    <div class="card-body p-4">
+        
+        <!-- Upload Form -->
+        {% if current_user.role == 'admin' or (current_user.role == 'student' and current_user.student.id == student.id) %}
+        <h6 class="text-muted fw-semibold mb-2">Upload New File</h6>
+        <form action="{{ url_for('documents.upload', student_id=student.id) }}" method="POST" enctype="multipart/form-data" class="row g-2 mb-4 p-3 border rounded bg-light">
+            <div class="col-md-5">
+                <input type="file" name="file" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+                <select name="file_type" class="form-select form-select-sm">
+                    <option value="certificate">Academic Certificate</option>
+                    <option value="transcript">External Transcript</option>
+                    <option value="identity">Identification File</option>
+                    <option value="other">Other Attachment</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-info btn-sm w-100 text-white"><i class="fa-solid fa-upload me-1"></i>Upload File</button>
+            </div>
+        </form>
+        {% endif %}
+
+        <!-- Document List -->
+        <h6 class="text-muted fw-semibold mb-3">Saved Files</h6>
+        {% if student.documents %}
+        <ul class="list-group list-group-flush border rounded">
+            {% for doc in student.documents %}
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center">
+                    <div class="fs-3 text-info me-3">
+                        {% if doc.file_type == 'certificate' %}
+                            <i class="fa-solid fa-award"></i>
+                        {% elif doc.file_type == 'identity' %}
+                            <i class="fa-solid fa-id-card"></i>
+                        {% else %}
+                            <i class="fa-solid fa-file-pdf"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-semibold text-dark">{{ doc.file_name }}</h6>
+                        <small class="text-muted text-capitalize">{{ doc.file_type }} | Uploaded: {{ doc.uploaded_at.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('documents.download', document_id=doc.id) }}" class="btn btn-outline-success btn-sm" target="_blank" title="Download file">
+                        <i class="fa-solid fa-download"></i> Download
+                    </a>
+                    
+                    {% if current_user.role == 'admin' or (current_user.role == 'student' and current_user.student.id == student.id) %}
+                    <form action="{{ url_for('documents.delete', document_id=doc.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this document? This cannot be undone.');" style="display:inline;">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete file">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center text-muted py-5 border rounded bg-light">
+            <i class="fa-solid fa-folder-closed fs-1 mb-3"></i>
+            <p class="mb-0">No documents or certificates uploaded yet. Click upload to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

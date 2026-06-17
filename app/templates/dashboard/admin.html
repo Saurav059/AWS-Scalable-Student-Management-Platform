@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard | AWS Student Platform{% endblock %}
+
+{% block head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Administrative Console</h2>
+        <p class="text-muted">Cloud infrastructure and academic statistics overview</p>
+    </div>
+    
+    <!-- Report Generation Buttons -->
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle shadow-sm" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-file-export me-2"></i>Export System Reports
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="exportDropdown">
+            <li><h6 class="dropdown-header">Students Registry</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('api.export_students', format='csv') }}"><i class="fa-solid fa-file-csv me-2 text-success"></i>CSV Format</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('api.export_students', format='pdf') }}"><i class="fa-solid fa-file-pdf me-2 text-danger"></i>PDF Format</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">Courses Structure</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('api.export_courses', format='csv') }}"><i class="fa-solid fa-file-csv me-2 text-success"></i>CSV Format</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('api.export_courses', format='pdf') }}"><i class="fa-solid fa-file-pdf me-2 text-danger"></i>PDF Format</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">Attendance Register</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('api.export_attendance', format='csv') }}"><i class="fa-solid fa-file-csv me-2 text-success"></i>CSV Format</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">Grades Summary</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('api.export_marks', format='csv') }}"><i class="fa-solid fa-file-csv me-2 text-success"></i>CSV Format</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Metrics Cards Row -->
+<div class="row g-3 mb-4">
+    <!-- Total Students -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card h-100 bg-white border-start border-primary border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fs-8 fw-semibold">Students</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-dark">{{ total_students }}</h3>
+                </div>
+                <div class="stat-icon text-primary"><i class="fa-solid fa-user-graduate"></i></div>
+            </div>
+        </div>
+    </div>
+    <!-- Total Teachers -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card h-100 bg-white border-start border-info border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fs-8 fw-semibold">Teachers</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-dark">{{ total_teachers }}</h3>
+                </div>
+                <div class="stat-icon text-info"><i class="fa-solid fa-chalkboard-user"></i></div>
+            </div>
+        </div>
+    </div>
+    <!-- Total Courses -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card h-100 bg-white border-start border-warning border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fs-8 fw-semibold">Courses</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-dark">{{ total_courses }}</h3>
+                </div>
+                <div class="stat-icon text-warning"><i class="fa-solid fa-book"></i></div>
+            </div>
+        </div>
+    </div>
+    <!-- Attendance Records -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card h-100 bg-white border-start border-secondary border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fs-8 fw-semibold">Attendance logs</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-dark">{{ total_attendance }}</h3>
+                </div>
+                <div class="stat-icon text-secondary"><i class="fa-solid fa-calendar-days"></i></div>
+            </div>
+        </div>
+    </div>
+    <!-- Avg Attendance Rate -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card h-100 bg-white border-start border-success border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fs-8 fw-semibold">Attendance</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-dark">{{ avg_attendance }}%</h3>
+                </div>
+                <div class="stat-icon text-success"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <!-- Pass Rate -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card h-100 bg-white border-start border-danger border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fs-8 fw-semibold">Pass Rate</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-dark">{{ pass_rate }}%</h3>
+                </div>
+                <div class="stat-icon text-danger"><i class="fa-solid fa-graduation-cap"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Student Growth -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold mb-0"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Student Registration Growth</h5>
+                <span class="badge bg-light text-dark">Last 6 Months</span>
+            </div>
+            <div class="card-body">
+                <canvas id="growthChart" height="240"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Distribution -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="fw-semibold mb-0"><i class="fa-solid fa-chart-pie me-2 text-success"></i>Attendance Breakdown</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="w-100" style="max-width: 250px;">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Grade Distribution Chart -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="fw-semibold mb-0"><i class="fa-solid fa-chart-bar me-2 text-warning"></i>Grade Distribution Summary</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="gradeChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Security & Audit logs -->
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold mb-0"><i class="fa-solid fa-shield-halved me-2 text-danger"></i>Security & Event Audit Trail</h5>
+                <i class="fa-solid fa-circle-notch text-success fa-spin" title="Live tracking active"></i>
+            </div>
+            <div class="card-body" style="max-height: 350px; overflow-y: auto;">
+                {% if recent_activities %}
+                <div class="timeline">
+                    {% for log in recent_activities %}
+                    <div class="timeline-item {% if log.action in ['failed_login', 'unauthorized_access_attempt'] %}failed{% endif %}">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-semibold text-dark fs-7 text-capitalize">{{ log.action.replace('_', ' ') }}</span>
+                            <span class="text-muted small fs-8">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+                        </div>
+                        <p class="text-muted small mb-1">{{ log.details }}</p>
+                        <span class="badge bg-light text-muted fs-8"><i class="fa-solid fa-network-wired me-1"></i>{{ log.ip_address }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fa-solid fa-list-check fs-2 mb-2"></i>
+                    <p class="mb-0">No audit logs registered yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Chart configuration values
+        const growthLabels = {{ growth_labels | tojson }};
+        const growthData = {{ growth_data | tojson }};
+        
+        const gradeLabels = {{ grade_dist.keys() | list | tojson }};
+        const gradeData = {{ grade_dist.values() | list | tojson }};
+        
+        const attendanceData = [
+            {{ attendance_dist.get('Present', 0) }},
+            {{ attendance_dist.get('Late', 0) }},
+            {{ attendance_dist.get('Absent', 0) }}
+        ];
+
+        // 1. Student Growth Chart (Line)
+        new Chart(document.getElementById('growthChart'), {
+            type: 'line',
+            data: {
+                labels: growthLabels.length ? growthLabels : ['No Data'],
+                datasets: [{
+                    label: 'Registrations',
+                    data: growthData.length ? growthData : [0],
+                    borderColor: '#1a252f',
+                    backgroundColor: 'rgba(26, 37, 47, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Attendance Chart (Doughnut)
+        new Chart(document.getElementById('attendanceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Late', 'Absent'],
+                datasets: [{
+                    data: attendanceData,
+                    backgroundColor: ['#18bc9c', '#f39c12', '#e74c3c'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // 3. Grade Distribution Chart (Bar)
+        new Chart(document.getElementById('gradeChart'), {
+            type: 'bar',
+            data: {
+                labels: gradeLabels.length ? gradeLabels : ['A', 'B', 'C', 'D', 'F'],
+                datasets: [{
+                    label: 'Number of Students',
+                    data: gradeData.length ? gradeData : [0, 0, 0, 0, 0],
+                    backgroundColor: '#f39c12',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

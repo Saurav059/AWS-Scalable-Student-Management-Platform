@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.course_code }} - Details | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('courses.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Catalog</a>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h2 class="fw-bold text-dark mb-0">{{ course.course_code }}: {{ course.course_name }}</h2>
+        
+        <div class="d-flex gap-2">
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('courses.edit', id=course.id) }}" class="btn btn-outline-primary shadow-sm">
+                <i class="fa-solid fa-pen me-2"></i>Edit Course
+            </a>
+            {% endif %}
+            
+            {% if current_user.role in ['admin', 'teacher'] %}
+            <a href="{{ url_for('attendance.record', course_id=course.id) }}" class="btn btn-success shadow-sm">
+                <i class="fa-solid fa-calendar-check me-2"></i>Take Attendance
+            </a>
+            <a href="{{ url_for('marks.record', course_id=course.id) }}" class="btn btn-warning shadow-sm text-dark">
+                <i class="fa-solid fa-star me-2"></i>Enter Grades
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Course Info Card -->
+    <div class="col-lg-4">
+        <div class="card bg-white shadow-sm mb-4">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-solid fa-circle-info me-2 text-primary"></i>Course Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm small text-start">
+                    <tr>
+                        <td class="fw-semibold text-muted" style="width: 120px;">Code:</td>
+                        <td class="text-dark"><span class="badge bg-primary fs-7">{{ course.course_code }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Title:</td>
+                        <td class="text-dark fw-semibold">{{ course.course_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Credit Hours:</td>
+                        <td class="text-dark">{{ course.credit_hours }} Hours</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Department:</td>
+                        <td class="text-dark">{{ course.department }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Semester:</td>
+                        <td class="text-dark">{{ course.semester }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Instructor:</td>
+                        <td class="text-dark fw-semibold">{{ course.teacher.full_name if course.teacher else 'Unassigned (TBD)' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Admin Quick Enrollment Form -->
+        {% if current_user.role == 'admin' %}
+        <div class="card bg-white shadow-sm">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-solid fa-user-plus me-2 text-success"></i>Enroll Student</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('courses.enroll', id=course.id) }}" method="POST">
+                    <div class="mb-3">
+                        <label for="student_id" class="form-label small text-muted">Select Student</label>
+                        <select name="student_id" id="student_id" class="form-select border-primary" required>
+                            <option value="" disabled selected>-- Choose Student --</option>
+                            {% for student in all_students %}
+                                {% if student not in enrolled_students %}
+                                <option value="{{ student.id }}">{{ student.full_name }} ({{ student.student_id }})</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 btn-sm"><i class="fa-solid fa-plus me-2"></i>Add to Class</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Student Roster Table -->
+    <div class="col-lg-8">
+        <div class="card bg-white shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-users me-2 text-info"></i>Student Roster</h5>
+                <span class="badge bg-secondary">{{ enrolled_students | length }} Students</span>
+            </div>
+            <div class="card-body">
+                {% if enrolled_students %}
+                <div class="table-responsive shadow-none">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Student ID</th>
+                                <th>Full Name</th>
+                                <th>Program</th>
+                                {% if current_user.role == 'admin' %}
+                                <th class="text-end">Action</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in enrolled_students %}
+                            <tr>
+                                <td>
+                                    {% if student.profile_photo %}
+                                        <img src="{{ storage_url(student.profile_photo) }}" alt="Photo" class="rounded-circle border" style="width: 35px; height: 35px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small" style="width: 35px; height: 35px; font-size: 11px;">
+                                            {{ student.first_name[0] }}{{ student.last_name[0] }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td><span class="fw-semibold text-dark">{{ student.student_id }}</span></td>
+                                <td><a href="{{ url_for('students.details', id=student.id) }}" class="text-decoration-none text-dark fw-medium">{{ student.full_name }}</a></td>
+                                <td>{{ student.program }}</td>
+                                {% if current_user.role == 'admin' %}
+                                <td class="text-end">
+                                    <form action="{{ url_for('courses.unenroll', id=course.id, student_id=student.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to unenroll this student from the course? This will remove all their grades and attendance for this course.');" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove from class">
+                                            <i class="fa-solid fa-trash-can"></i> Remove
+                                        </button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fa-solid fa-people-group fs-1 mb-3"></i>
+                    <p class="mb-0">No students enrolled in this course yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

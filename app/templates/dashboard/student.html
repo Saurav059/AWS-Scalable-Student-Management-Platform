@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Hub | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Student Portal</h2>
+        <p class="text-muted">Welcome, <b>{{ student.full_name }}</b>. Track your academic standing and files.</p>
+    </div>
+    
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('api.export_marks', student_id=student.id, format='pdf') }}" class="btn btn-outline-danger shadow-sm">
+            <i class="fa-solid fa-file-pdf me-2"></i>Download Transcript
+        </a>
+        <a href="{{ url_for('api.export_attendance', student_id=student.id, format='pdf') }}" class="btn btn-outline-success shadow-sm">
+            <i class="fa-solid fa-calendar-days me-2"></i>Attendance Report
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Student Information Profile Card -->
+    <div class="col-lg-4">
+        <div class="card h-100 bg-white">
+            <div class="card-body text-center p-4">
+                <!-- Profile Photo -->
+                <div class="mb-3">
+                    {% if student.profile_photo %}
+                        <img src="{{ storage_url(student.profile_photo) }}" alt="Profile Photo" class="rounded-circle border shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <div class="avatar bg-primary text-white rounded-circle border shadow-sm d-inline-flex align-items-center justify-content-center fw-bold fs-1" style="width: 120px; height: 120px;">
+                            {{ student.first_name[0] }}{{ student.last_name[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h4 class="fw-bold text-dark mb-1">{{ student.full_name }}</h4>
+                <p class="badge bg-primary fs-7 mb-4">{{ student.program }}</p>
+                
+                <table class="table table-borderless table-sm small text-start">
+                    <tr>
+                        <td class="fw-semibold text-muted" style="width: 120px;">Student ID:</td>
+                        <td class="text-dark">{{ student.student_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Department:</td>
+                        <td class="text-dark">{{ student.department }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Date of Birth:</td>
+                        <td class="text-dark">{{ student.date_of_birth.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Phone:</td>
+                        <td class="text-dark">{{ student.phone or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Email:</td>
+                        <td class="text-dark">{{ current_user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Address:</td>
+                        <td class="text-dark text-wrap">{{ student.address or 'N/A' }}</td>
+                    </tr>
+                </table>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('students.edit', id=student.id) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-user-pen me-2"></i>Update Personal Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Stats, Courses and Grades -->
+    <div class="col-lg-8">
+        <div class="row g-4 mb-4">
+            <!-- GPA Card -->
+            <div class="col-md-6">
+                <div class="card bg-white p-4 h-100 border-start border-warning border-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted text-uppercase fs-8 fw-semibold">Cumulative GPA</span>
+                            <h2 class="fw-bold text-dark mt-2 mb-0">{{ cumulative_gpa }} / 4.0</h2>
+                            <p class="text-muted small mt-1 mb-0">Weighted by course credit hours</p>
+                        </div>
+                        <div class="stat-icon text-warning fs-1"><i class="fa-solid fa-graduation-cap"></i></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attendance Card -->
+            <div class="col-md-6">
+                <div class="card bg-white p-4 h-100 border-start border-success border-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="w-75">
+                            <span class="text-muted text-uppercase fs-8 fw-semibold">Attendance Rate</span>
+                            <h2 class="fw-bold text-dark mt-2 mb-2">{{ attendance_percentage }}%</h2>
+                            
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar {% if attendance_percentage >= 75 %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ attendance_percentage }}%;" aria-valuenow="{{ attendance_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="stat-icon text-success fs-1"><i class="fa-solid fa-user-check"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled Courses -->
+        <div class="card bg-white mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-book me-2 text-primary"></i>My Enrolled Courses</h5>
+                <span class="badge bg-secondary">{{ courses | length }} Enrolled</span>
+            </div>
+            <div class="card-body">
+                {% if courses %}
+                <div class="table-responsive shadow-none">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Credits</th>
+                                <th>Semester</th>
+                                <th>Instructor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in courses %}
+                            <tr>
+                                <td><span class="badge bg-light text-dark">{{ c.course_code }}</span></td>
+                                <td class="fw-semibold">{{ c.course_name }}</td>
+                                <td>{{ c.credit_hours }} Hours</td>
+                                <td>{{ c.semester }}</td>
+                                <td>{{ c.teacher.full_name if c.teacher else 'TBD' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fa-solid fa-circle-exclamation fs-3 mb-2"></i>
+                    <p class="mb-0">You are not currently enrolled in any courses.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Marks -->
+        <div class="card bg-white">
+            <div class="card-header">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-star me-2 text-warning"></i>Recent Academic Marks</h5>
+            </div>
+            <div class="card-body">
+                {% if marks %}
+                <div class="table-responsive shadow-none">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Assignment (20)</th>
+                                <th>Midterm (30)</th>
+                                <th>Final Exam (50)</th>
+                                <th>Total</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in marks %}
+                            <tr>
+                                <td class="fw-semibold">{{ m.course.course_name }}</td>
+                                <td>{{ m.assignment_marks }}</td>
+                                <td>{{ m.midterm_marks }}</td>
+                                <td>{{ m.final_marks }}</td>
+                                <td><b>{{ m.total_marks }}</b></td>
+                                <td><span class="badge {% if m.grade == 'F' %}bg-danger{% else %}bg-success{% endif %}">{{ m.grade }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fa-solid fa-award fs-3 mb-2"></i>
+                    <p class="mb-0">No grade records have been uploaded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

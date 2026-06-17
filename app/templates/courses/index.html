@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Course Catalog | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Course Structure & Catalog</h2>
+        <p class="text-muted">Manage academic subjects and instructor assignments</p>
+    </div>
+    
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('courses.create') }}" class="btn btn-success shadow-sm">
+        <i class="fa-solid fa-plus me-2"></i>Add New Course
+    </a>
+    {% endif %}
+</div>
+
+<!-- Search Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form action="{{ url_for('courses.index') }}" method="GET" class="row g-3">
+            <div class="col-md-9 col-lg-10">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search by Code, Course Title, Department, or Semester..." value="{{ query }}">
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-2"></i>Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Course List Grid -->
+<div class="row g-4">
+    {% if courses %}
+        {% for course in courses %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 bg-white">
+                <div class="card-body d-flex flex-column justify-content-between p-4">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-primary fs-7">{{ course.course_code }}</span>
+                            <span class="text-muted small"><i class="fa-regular fa-clock me-1"></i>{{ course.credit_hours }} Credits</span>
+                        </div>
+                        
+                        <h5 class="fw-bold text-dark mb-2">{{ course.course_name }}</h5>
+                        <p class="text-muted small mb-2"><i class="fa-solid fa-building-columns me-2"></i>{{ course.department }} Department</p>
+                        <p class="text-muted small mb-3"><i class="fa-solid fa-layer-group me-2"></i>Semester: {{ course.semester }}</p>
+                        
+                        <!-- Teacher Assignment -->
+                        <div class="d-flex align-items-center p-2 rounded bg-light border-start border-info border-3 mb-4">
+                            <i class="fa-solid fa-chalkboard-user text-info fs-5 me-2"></i>
+                            <div class="small">
+                                <span class="text-muted d-block fs-8">Instructor</span>
+                                <span class="fw-semibold text-dark">{{ course.teacher.full_name if course.teacher else 'Unassigned' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-between align-items-center border-top pt-3 mt-auto">
+                        <!-- Permissions check: can this user view course details? -->
+                        {% set can_view = false %}
+                        {% if current_user.role == 'admin' %}
+                            {% set can_view = true %}
+                        {% elif current_user.role == 'teacher' and course.teacher and course.teacher.user_id == current_user.id %}
+                            {% set can_view = true %}
+                        {% elif current_user.role == 'student' %}
+                            {% for e in current_user.student.enrollments %}
+                                {% if e.course_id == course.id %}
+                                    {% set can_view = true %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if can_view %}
+                        <a href="{{ url_for('courses.details', id=course.id) }}" class="btn btn-outline-primary btn-sm flex-fill">
+                            <i class="fa-solid fa-circle-info me-1"></i>Details & Roster
+                        </a>
+                        {% else %}
+                        <span class="text-muted small"><i class="fa-solid fa-lock me-1"></i>Not Enrolled</span>
+                        {% endif %}
+                        
+                        {% if current_user.role == 'admin' %}
+                        <div class="btn-group gap-1">
+                            <a href="{{ url_for('courses.edit', id=course.id) }}" class="btn btn-outline-secondary btn-sm" title="Edit Course">
+                                <i class="fa-solid fa-pencil"></i>
+                            </a>
+                            <form action="{{ url_for('courses.delete', id=course.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this course? All associated enrollments, marks and attendance records will be permanently removed.');" style="display:inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Course">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card bg-white p-5 text-center text-muted">
+                <i class="fa-solid fa-book-open-reader fs-1 mb-3"></i>
+                <p class="mb-0">No courses matching that search query were found.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

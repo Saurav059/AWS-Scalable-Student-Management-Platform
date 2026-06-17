@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Enter Grades | {{ course.course_code }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('marks.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Courses</a>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h2 class="fw-bold text-dark mb-0">{{ course.course_code }}: Grade Book</h2>
+        <span class="badge bg-primary fs-7">Term: {{ course.semester }}</span>
+    </div>
+</div>
+
+<!-- Grade Book Sheet -->
+<div class="card bg-white shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-star me-2 text-warning"></i>Student Grade Entry Sheet</h5>
+            <small class="text-muted">Weighting breakdown: Assignment (Max 20) | Midterm (Max 30) | Final Exam (Max 50)</small>
+        </div>
+        <span class="badge bg-light text-dark border">{{ students | length }} Enrolled</span>
+    </div>
+    <div class="card-body">
+        {% if students %}
+        <form action="{{ url_for('marks.record', course_id=course.id) }}" method="POST">
+            <div class="table-responsive shadow-none mb-4">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Full Name</th>
+                            <th style="width: 150px;">Assignment (20)</th>
+                            <th style="width: 150px;">Midterm (30)</th>
+                            <th style="width: 150px;">Final Exam (50)</th>
+                            <th class="text-center" style="width: 120px;">Total (100)</th>
+                            <th class="text-center" style="width: 100px;">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        {% set current_mark = marks_map.get(student.id) %}
+                        <tr>
+                            <td><span class="fw-semibold text-dark">{{ student.student_id }}</span></td>
+                            <td>{{ student.full_name }}</td>
+                            <td>
+                                <input type="number" step="0.5" min="0" max="20" name="assignment_{{ student.id }}" class="form-control form-control-sm border-warning" value="{{ current_mark.assignment_marks if current_mark else '' }}" placeholder="Max 20">
+                            </td>
+                            <td>
+                                <input type="number" step="0.5" min="0" max="30" name="midterm_{{ student.id }}" class="form-control form-control-sm border-warning" value="{{ current_mark.midterm_marks if current_mark else '' }}" placeholder="Max 30">
+                            </td>
+                            <td>
+                                <input type="number" step="0.5" min="0" max="50" name="final_{{ student.id }}" class="form-control form-control-sm border-warning" value="{{ current_mark.final_marks if current_mark else '' }}" placeholder="Max 50">
+                            </td>
+                            <td class="text-center fw-bold text-dark">
+                                {{ current_mark.total_marks if current_mark else '0.0' }}
+                            </td>
+                            <td class="text-center">
+                                {% if current_mark %}
+                                    <span class="badge {% if current_mark.grade == 'F' %}bg-danger{% else %}bg-success{% endif %} fs-7">{{ current_mark.grade }}</span>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{{ url_for('marks.index') }}" class="btn btn-outline-secondary">Discard Changes</a>
+                <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk me-2"></i>Save Grade Sheet</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fa-solid fa-users-slash fs-1 mb-3"></i>
+            <p class="mb-0">No students are currently enrolled in this class to record marks.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

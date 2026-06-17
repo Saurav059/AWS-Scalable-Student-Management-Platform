@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Log | {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    {% if current_user.role in ['admin', 'teacher'] %}
+    <a href="{{ url_for('students.details', id=student.id) }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Student Profile</a>
+    {% else %}
+    <a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard</a>
+    {% endif %}
+    
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h2 class="fw-bold text-dark mb-0">Attendance Sheets: {{ student.full_name }}</h2>
+        
+        <a href="{{ url_for('api.export_attendance', student_id=student.id, format='pdf', course_id=selected_course_id) }}" class="btn btn-outline-danger shadow-sm">
+            <i class="fa-solid fa-file-pdf me-2"></i>Export PDF Log
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Filters & Stats Column -->
+    <div class="col-lg-4">
+        <!-- Course Filter -->
+        <div class="card bg-white shadow-sm mb-4">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-solid fa-filter me-2 text-primary"></i>Filter by Course</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('attendance.student_report', student_id=student.id) }}" method="GET">
+                    <div class="mb-3">
+                        <select name="course_id" id="course_id" class="form-select border-primary" onchange="this.form.submit()">
+                            <option value="">-- All Enrolled Courses --</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}" {% if selected_course_id == course.id %}selected{% endif %}>{{ course.course_code }} - {{ course.course_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">Apply Filter</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Attendance Stats Circle Card -->
+        <div class="card bg-white shadow-sm">
+            <div class="card-body text-center p-4">
+                <span class="text-muted text-uppercase fs-8 fw-semibold d-block mb-3">Attendance Rate</span>
+                
+                <!-- Circular/Grid Progress representation -->
+                <div class="d-inline-flex align-items-center justify-content-center border border-5 {% if percentage >= 75 %}border-success{% else %}border-danger{% endif %} rounded-circle mb-3 shadow-sm" style="width: 130px; height: 130px;">
+                    <h3 class="fw-bold mb-0 text-dark">{{ percentage }}%</h3>
+                </div>
+                
+                <p class="text-muted small mb-0">Minimum threshold: 75% required</p>
+                {% if percentage < 75 %}
+                    <div class="alert alert-danger py-2 px-3 mt-3 mb-0 small"><i class="fa-solid fa-triangle-exclamation me-2"></i>Below target rate. Risk of course suspension.</div>
+                {% else %}
+                    <div class="alert alert-success py-2 px-3 mt-3 mb-0 small"><i class="fa-solid fa-circle-check me-2"></i>Good standing. Meets requirement.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Log History -->
+    <div class="col-lg-8">
+        <div class="card bg-white shadow-sm">
+            <div class="card-header">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-history me-2 text-info"></i>History Log Sheet</h5>
+            </div>
+            <div class="card-body">
+                {% if records %}
+                <div class="table-responsive shadow-none">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Course Code</th>
+                                <th>Course Title</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ record.date.strftime('%Y-%m-%d') }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ record.course.course_code }}</span></td>
+                                <td>{{ record.course.course_name }}</td>
+                                <td>
+                                    {% if record.status == 'Present' %}
+                                        <span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i>Present</span>
+                                    {% elif record.status == 'Late' %}
+                                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Late</span>
+                                    {% else %}
+                                        <span class="badge bg-danger"><i class="fa-solid fa-circle-xmark me-1"></i>Absent</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fa-solid fa-calendar-xmark fs-1 mb-3"></i>
+                    <p class="mb-0">No attendance sessions recorded for this course.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

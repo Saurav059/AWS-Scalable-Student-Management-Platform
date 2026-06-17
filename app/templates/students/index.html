@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Registry | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Student Database Registry</h2>
+        <p class="text-muted">Browse and manage enrolled student accounts</p>
+    </div>
+    
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('students.create') }}" class="btn btn-success shadow-sm">
+        <i class="fa-solid fa-plus me-2"></i>Add New Student
+    </a>
+    {% endif %}
+</div>
+
+<!-- Search Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form action="{{ url_for('students.index') }}" method="GET" class="row g-3">
+            <div class="col-md-9 col-lg-10">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search by Student ID, Name, Department, or Program..." value="{{ query }}">
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-2"></i>Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Students Table -->
+<div class="table-responsive bg-white rounded shadow-sm">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Photo</th>
+                <th>Student ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Program</th>
+                <th>Enroll Date</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if students %}
+                {% for student in students %}
+                <tr>
+                    <td>
+                        {% if student.profile_photo %}
+                            <img src="{{ storage_url(student.profile_photo) }}" alt="Photo" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;">
+                        {% else %}
+                            <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small" style="width: 40px; height: 40px;">
+                                {{ student.first_name[0] }}{{ student.last_name[0] }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td><span class="fw-semibold text-dark">{{ student.student_id }}</span></td>
+                    <td>{{ student.full_name }}</td>
+                    <td>{{ student.user.email }}</td>
+                    <td>{{ student.department }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ student.program }}</span></td>
+                    <td>{{ student.enrollment_date.strftime('%Y-%m-%d') if student.enrollment_date else 'N/A' }}</td>
+                    <td class="text-end">
+                        <div class="btn-group gap-1">
+                            <a href="{{ url_for('students.details', id=student.id) }}" class="btn btn-outline-info btn-sm" title="View Profile">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            
+                            {% if current_user.role == 'admin' %}
+                            <a href="{{ url_for('students.edit', id=student.id) }}" class="btn btn-outline-primary btn-sm" title="Edit Profile">
+                                <i class="fa-solid fa-user-pen"></i>
+                            </a>
+                            
+                            <form action="{{ url_for('students.delete', id=student.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this student and their associated login account? This action cannot be undone.');" style="display:inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Account">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="fa-solid fa-users-slash fs-1 mb-3"></i>
+                        <p class="mb-0">No students found matching the query.</p>
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

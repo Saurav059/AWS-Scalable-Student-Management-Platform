@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Attendance | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-dark mb-1">Attendance Management</h2>
+    <p class="text-muted">Select an assigned course below to record daily attendance or review sheets.</p>
+</div>
+
+<div class="row g-4">
+    {% if courses %}
+        {% for course in courses %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card bg-white h-100 border-start border-success border-4">
+                <div class="card-body d-flex flex-column justify-content-between p-4">
+                    <div>
+                        <span class="badge bg-light text-dark border mb-2">{{ course.course_code }}</span>
+                        <h5 class="fw-bold text-dark mb-1">{{ course.course_name }}</h5>
+                        <p class="text-muted small mb-3">Semester: {{ course.semester }} | Credits: {{ course.credit_hours }}</p>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <a href="{{ url_for('attendance.record', course_id=course.id) }}" class="btn btn-success btn-sm">
+                            <i class="fa-solid fa-calendar-check me-2"></i>Record / View Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card bg-white p-5 text-center text-muted">
+                <i class="fa-solid fa-calendar-xmark fs-1 mb-3"></i>
+                <h5 class="fw-bold">No Courses Available</h5>
+                <p class="mb-0">You are not currently assigned to instruct or view any course catalogs.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

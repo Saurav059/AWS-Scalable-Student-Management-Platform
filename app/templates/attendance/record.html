@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Attendance | {{ course.course_code }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('attendance.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Courses</a>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h2 class="fw-bold text-dark mb-0">{{ course.course_code }}: Attendance Record</h2>
+        <span class="badge bg-primary fs-7">Term: {{ course.semester }}</span>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Configuration / Date Selector Card -->
+    <div class="col-lg-4">
+        <div class="card bg-white shadow-sm mb-4">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-regular fa-calendar-days me-2 text-success"></i>Select Session Date</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('attendance.record', course_id=course.id) }}" method="GET">
+                    <div class="mb-3">
+                        <label for="date" class="form-label small text-muted">Session Date</label>
+                        <input type="date" name="date" id="date" class="form-control border-primary" value="{{ date.strftime('%Y-%m-%d') }}" onchange="this.form.submit()">
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">Load Roster for Date</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Course Summary stats -->
+        <div class="card bg-white shadow-sm">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-solid fa-chart-pie me-2 text-info"></i>Class Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="text-muted d-block small">Average Attendance Rate</span>
+                    <h3 class="fw-bold mt-1 text-success">{{ summary.average_rate }}%</h3>
+                </div>
+                <div class="row g-2 text-center text-muted small border-top pt-3">
+                    <div class="col-6 border-end">
+                        <span class="d-block fs-8">Sessions Tracked</span>
+                        <span class="fw-semibold text-dark fs-6">{{ summary.unique_dates }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="d-block fs-8">Total Records</span>
+                        <span class="fw-semibold text-dark fs-6">{{ summary.total_records }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Attendance Grid Form -->
+    <div class="col-lg-8">
+        <div class="card bg-white shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-clipboard-user me-2 text-success"></i>Roster for: {{ date.strftime('%Y-%m-%d') }}</h5>
+                <span class="badge bg-light text-dark border">{{ students | length }} Enrolled</span>
+            </div>
+            <div class="card-body">
+                {% if students %}
+                <form action="{{ url_for('attendance.record', course_id=course.id) }}" method="POST">
+                    <!-- Pass current date as hidden field -->
+                    <input type="hidden" name="date" value="{{ date.strftime('%Y-%m-%d') }}">
+                    
+                    <div class="table-responsive shadow-none mb-4">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Full Name</th>
+                                    <th class="text-center" style="width: 250px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td><span class="fw-semibold text-dark">{{ student.student_id }}</span></td>
+                                    <td>{{ student.full_name }}</td>
+                                    <td>
+                                        {% set current_status = status_map.get(student.id, 'Present') %}
+                                        <div class="d-flex justify-content-around bg-light p-1 rounded border">
+                                            <!-- Present -->
+                                            <div class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input check-present" type="radio" name="status_{{ student.id }}" id="pres_{{ student.id }}" value="Present" {% if current_status == 'Present' %}checked{% endif %}>
+                                                <label class="form-check-label text-success fw-semibold small" for="pres_{{ student.id }}">P</label>
+                                            </div>
+                                            <!-- Late -->
+                                            <div class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input check-late" type="radio" name="status_{{ student.id }}" id="late_{{ student.id }}" value="Late" {% if current_status == 'Late' %}checked{% endif %}>
+                                                <label class="form-check-label text-warning fw-semibold small" for="late_{{ student.id }}">L</label>
+                                            </div>
+                                            <!-- Absent -->
+                                            <div class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input check-absent" type="radio" name="status_{{ student.id }}" id="abs_{{ student.id }}" value="Absent" {% if current_status == 'Absent' %}checked{% endif %}>
+                                                <label class="form-check-label text-danger fw-semibold small" for="abs_{{ student.id }}">A</label>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <!-- Quick Actions JavaScript controls -->
+                        <button type="button" class="btn btn-outline-success btn-sm me-auto" onclick="markAll('Present')">Mark All Present</button>
+                        <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk me-2"></i>Save Attendance Sheet</button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fa-solid fa-users-slash fs-1 mb-3"></i>
+                    <p class="mb-0">No students are enrolled in this class to record attendance.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function markAll(status) {
+        if (status === 'Present') {
+            document.querySelectorAll('.check-present').forEach(el => el.checked = true);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Student Profile | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('students.details', id=student.id) }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Profile View</a>
+    <h2 class="fw-bold text-dark mt-2">Update Student Profile</h2>
+    <p class="text-muted">Modify biochemical or academic details for <b>{{ student.full_name }}</b></p>
+</div>
+
+<div class="card bg-white shadow-sm max-width-container" style="max-width: 800px;">
+    <div class="card-body p-4">
+        <form action="{{ url_for('students.edit', id=student.id) }}" method="POST" enctype="multipart/form-data">
+            
+            <h5 class="border-bottom pb-2 mb-3 text-secondary fw-semibold"><i class="fa-solid fa-user-lock me-2"></i>Account Access</h5>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address *</label>
+                <input type="email" name="email" id="email" class="form-control" value="{{ student.user.email }}" required {% if current_user.role != 'admin' %}readonly{% endif %}>
+                {% if current_user.role != 'admin' %}
+                <div class="form-text">Only administrators can modify registered email accounts.</div>
+                {% endif %}
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3 mt-4 text-secondary fw-semibold"><i class="fa-solid fa-address-card me-2"></i>Biographical Details</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="student_id" class="form-label">Student ID / Matric Code</label>
+                    <input type="text" name="student_id" id="student_id" class="form-control" value="{{ student.student_id }}" readonly>
+                    <div class="form-text text-danger">Student IDs cannot be changed after registration.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="date_of_birth" class="form-label">Date of Birth *</label>
+                    <input type="date" name="date_of_birth" id="date_of_birth" class="form-control" value="{{ student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '' }}" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="first_name" class="form-label">First Name *</label>
+                    <input type="text" name="first_name" id="first_name" class="form-control" value="{{ student.first_name }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="last_name" class="form-label">Last Name *</label>
+                    <input type="text" name="last_name" id="last_name" class="form-control" value="{{ student.last_name }}" required>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="gender" class="form-label">Gender</label>
+                    <select name="gender" id="gender" class="form-select">
+                        <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if student.gender == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input type="tel" name="phone" id="phone" class="form-control" value="{{ student.phone or '' }}" placeholder="+1-555-0155">
+                </div>
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3 mt-4 text-secondary fw-semibold"><i class="fa-solid fa-graduation-cap me-2"></i>Academic Track</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="department" class="form-label">Department *</label>
+                    <input type="text" name="department" id="department" class="form-control" value="{{ student.department }}" required {% if current_user.role != 'admin' %}readonly{% endif %}>
+                </div>
+                <div class="col-md-6">
+                    <label for="program" class="form-label">Program/Degree *</label>
+                    <input type="text" name="program" id="program" class="form-control" value="{{ student.program }}" required {% if current_user.role != 'admin' %}readonly{% endif %}>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="address" class="form-label">Residential Address</label>
+                <textarea name="address" id="address" class="form-control" rows="2" placeholder="Street Address, City, Zip Code">{{ student.address or '' }}</textarea>
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3 mt-4 text-secondary fw-semibold"><i class="fa-regular fa-image me-2"></i>Profile Image</h5>
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if student.profile_photo %}
+                        <img src="{{ storage_url(student.profile_photo) }}" alt="Current Photo" class="rounded border" style="width: 70px; height: 70px; object-fit: cover;">
+                        <div>
+                            <span class="text-muted small d-block">Current profile photo is active.</span>
+                            <span class="text-muted small">Uploading a new photo will replace it on AWS S3/Local.</span>
+                        </div>
+                    {% else %}
+                        <div class="avatar bg-secondary text-white rounded border d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 70px; height: 70px;">
+                            {{ student.first_name[0] }}{{ student.last_name[0] }}
+                        </div>
+                        <span class="text-muted small">No profile photo uploaded.</span>
+                    {% endif %}
+                </div>
+                
+                <label for="profile_photo" class="form-label">Select New Photo (Max 16MB)</label>
+                <input type="file" name="profile_photo" id="profile_photo" class="form-control" accept="image/*">
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-4">
+                <a href="{{ url_for('students.details', id=student.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk me-2"></i>Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | AWS Student Platform</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .auth-card {
+            max-width: 600px; /* Wider card for registration form */
+        }
+    </style>
+</head>
+<body class="auth-bg">
+
+    <div class="auth-card shadow-lg my-5">
+        <div class="text-center mb-4">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-cloud fs-4"></i>
+            </div>
+            <h3 class="fw-bold text-dark">Create Account</h3>
+            <p class="text-muted">Register a new profile in the platform</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('auth.register') }}" method="POST">
+            <!-- Email & Password -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email Address *</label>
+                    <input type="email" name="email" id="email" class="form-control" required placeholder="name@domain.com">
+                </div>
+                <div class="col-md-6">
+                    <label for="password" class="form-label">Password *</label>
+                    <input type="password" name="password" id="password" class="form-control" required placeholder="Min 6 characters">
+                </div>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="mb-4">
+                <label for="role" class="form-label fw-semibold">I want to register as a:</label>
+                <select name="role" id="role" class="form-select border-primary bg-light" onchange="toggleRoleFields()">
+                    <option value="student" selected>Student</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+
+            <!-- Student Fields -->
+            <div id="student-fields">
+                <h5 class="border-bottom pb-2 mb-3 text-secondary"><i class="fa-solid fa-user-graduate me-2"></i>Student Information</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="student_id" class="form-label">Student ID *</label>
+                        <input type="text" name="student_id" id="student_id" class="form-control" placeholder="e.g. STD001">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="date_of_birth" class="form-label">Date of Birth *</label>
+                        <input type="date" name="date_of_birth" id="date_of_birth" class="form-control">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="s_first_name" class="form-label">First Name *</label>
+                        <input type="text" name="first_name" id="s_first_name" class="form-control" placeholder="John">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="s_last_name" class="form-label">Last Name *</label>
+                        <input type="text" name="last_name" id="s_last_name" class="form-control" placeholder="Doe">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select name="gender" id="gender" class="form-select">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="text" name="phone" id="phone" class="form-control" placeholder="+1-202-555-0199">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="department" class="form-label">Department *</label>
+                        <input type="text" name="department" id="department" class="form-control" placeholder="e.g. Computer Science" value="Computer Science">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="program" class="form-label">Program/Degree *</label>
+                        <input type="text" name="program" id="program" class="form-control" placeholder="e.g. B.Sc. IT" value="B.Sc. IT">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea name="address" id="address" class="form-control" rows="2" placeholder="123 University Ave, City, State"></textarea>
+                </div>
+            </div>
+
+            <!-- Teacher Fields (Hidden by default) -->
+            <div id="teacher-fields" style="display: none;">
+                <h5 class="border-bottom pb-2 mb-3 text-secondary"><i class="fa-solid fa-chalkboard-user me-2"></i>Teacher Information</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="employee_id" class="form-label">Employee ID *</label>
+                        <input type="text" name="employee_id" id="employee_id" class="form-control" placeholder="e.g. TCH001">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="t_phone" class="form-label">Phone Number</label>
+                        <input type="text" name="t_phone" id="t_phone" class="form-control" placeholder="+1-202-555-0188">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="t_first_name" class="form-label">First Name *</label>
+                        <input type="text" name="t_first_name" id="t_first_name" class="form-control" placeholder="Jane">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="t_last_name" class="form-label">Last Name *</label>
+                        <input type="text" name="t_last_name" id="t_last_name" class="form-control" placeholder="Smith">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="t_department" class="form-label">Department *</label>
+                        <input type="text" name="t_department" id="t_department" class="form-control" placeholder="e.g. Computer Science" value="Computer Science">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="specialization" class="form-label">Specialization</label>
+                        <input type="text" name="specialization" id="specialization" class="form-control" placeholder="e.g. Machine Learning">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2 fs-6 mt-3 mb-2">
+                <i class="fa-solid fa-user-plus me-2"></i>Register
+            </button>
+        </form>
+
+        <div class="text-center text-muted mt-3">
+            Already have an account? <a href="{{ url_for('auth.login') }}" class="text-decoration-none text-primary fw-semibold">Sign In</a>
+        </div>
+    </div>
+
+    <!-- Script to toggle role fields dynamically -->
+    <script>
+        function toggleRoleFields() {
+            const role = document.getElementById("role").value;
+            const studentFields = document.getElementById("student-fields");
+            const teacherFields = document.getElementById("teacher-fields");
+            
+            // Student inputs
+            const studentRequiredIds = ["student_id", "date_of_birth", "s_first_name", "s_last_name", "department", "program"];
+            // Teacher inputs
+            const teacherRequiredIds = ["employee_id", "t_first_name", "t_last_name", "t_department"];
+            
+            if (role === "student") {
+                studentFields.style.display = "block";
+                teacherFields.style.display = "none";
+                
+                // Set requirements
+                studentRequiredIds.forEach(id => document.getElementById(id).setAttribute("required", "required"));
+                teacherRequiredIds.forEach(id => document.getElementById(id).removeAttribute("required"));
+            } else if (role === "teacher") {
+                studentFields.style.display = "none";
+                teacherFields.style.display = "block";
+                
+                // Set requirements
+                studentRequiredIds.forEach(id => document.getElementById(id).removeAttribute("required"));
+                teacherRequiredIds.forEach(id => document.getElementById(id).setAttribute("required", "required"));
+            } else { // admin
+                studentFields.style.display = "none";
+                teacherFields.style.display = "none";
+                
+                // Remove all custom requirements
+                studentRequiredIds.concat(teacherRequiredIds).forEach(id => document.getElementById(id).removeAttribute("required"));
+            }
+        }
+        
+        // Initialize on load
+        window.onload = toggleRoleFields;
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

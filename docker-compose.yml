@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: aws_student_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: student_platform
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: secure_db_password
+      MYSQL_ROOT_PASSWORD: root_db_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "db_user", "-psecure_db_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: aws_student_web
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - SECRET_KEY=default-dev-secret-key-for-local-runs
+      - DATABASE_URL=mysql+pymysql://db_user:secure_db_password@db/student_platform
+      - STORAGE_TYPE=local
+      - LOCAL_UPLOAD_FOLDER=/app/app/static/uploads
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

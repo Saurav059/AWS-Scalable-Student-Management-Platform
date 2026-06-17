@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} - Profile | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    {% if current_user.role in ['admin', 'teacher'] %}
+    <a href="{{ url_for('students.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Students Registry</a>
+    {% else %}
+    <a href="{{ url_for('dashboard.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard</a>
+    {% endif %}
+    
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h2 class="fw-bold text-dark mb-0">Student Profile</h2>
+        <div class="d-flex gap-2">
+            {% if current_user.role == 'admin' or (current_user.role == 'student' and current_user.student.id == student.id) %}
+            <a href="{{ url_for('students.edit', id=student.id) }}" class="btn btn-outline-primary">
+                <i class="fa-solid fa-user-pen me-2"></i>Edit Details
+            </a>
+            {% endif %}
+            
+            <a href="{{ url_for('api.export_marks', student_id=student.id, format='pdf') }}" class="btn btn-primary" title="PDF Transcript">
+                <i class="fa-solid fa-file-pdf me-2"></i>Download Transcript
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Biographical Card -->
+    <div class="col-lg-5">
+        <div class="card bg-white shadow-sm mb-4">
+            <div class="card-body p-4 text-center">
+                <!-- Profile Image -->
+                <div class="mb-3">
+                    {% if student.profile_photo %}
+                        <img src="{{ storage_url(student.profile_photo) }}" alt="Profile Photo" class="rounded-circle border shadow-sm" style="width: 140px; height: 140px; object-fit: cover;">
+                    {% else %}
+                        <div class="avatar bg-primary text-white rounded-circle border shadow-sm d-inline-flex align-items-center justify-content-center fw-bold fs-1" style="width: 140px; height: 140px;">
+                            {{ student.first_name[0] }}{{ student.last_name[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h4 class="fw-bold mb-1 text-dark">{{ student.full_name }}</h4>
+                <span class="badge bg-light border text-muted fs-8 mb-4">{{ student.student_id }}</span>
+                
+                <table class="table table-borderless table-sm small text-start">
+                    <tr>
+                        <td class="fw-semibold text-muted" style="width: 130px;">Program Track:</td>
+                        <td class="text-dark">{{ student.program }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Department:</td>
+                        <td class="text-dark">{{ student.department }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Enrollment Date:</td>
+                        <td class="text-dark">{{ student.enrollment_date.strftime('%Y-%m-%d') if student.enrollment_date else 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Date of Birth:</td>
+                        <td class="text-dark">{{ student.date_of_birth.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Gender:</td>
+                        <td class="text-dark">{{ student.gender or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Phone Number:</td>
+                        <td class="text-dark">{{ student.phone or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Email Contact:</td>
+                        <td class="text-dark">{{ student.user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold text-muted">Home Address:</td>
+                        <td class="text-dark text-wrap">{{ student.address or 'N/A' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrolled Courses & Documents Upload -->
+    <div class="col-lg-7">
+        <!-- Courses Grid -->
+        <div class="card bg-white shadow-sm mb-4">
+            <div class="card-header pb-0 border-0">
+                <h5 class="fw-semibold text-dark"><i class="fa-solid fa-book-bookmark me-2 text-warning"></i>Active Enrollments</h5>
+            </div>
+            <div class="card-body">
+                {% if student.enrollments %}
+                <div class="table-responsive shadow-none">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Course Title</th>
+                                <th>Credits</th>
+                                <th>Semester</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in student.enrollments %}
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">{{ e.course.course_code }}</span></td>
+                                <td class="fw-semibold">{{ e.course.course_name }}</td>
+                                <td>{{ e.course.credit_hours }} Credits</td>
+                                <td>{{ e.course.semester }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fa-solid fa-book-open-reader fs-2 mb-2"></i>
+                    <p class="mb-0">Not enrolled in any classes currently.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- File / Document Manager -->
+        <div class="card bg-white shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-semibold text-dark mb-0"><i class="fa-solid fa-folder-open me-2 text-info"></i>Certificate & Document Repository</h5>
+            </div>
+            <div class="card-body">
+                <!-- Upload form (Admin or Student owner) -->
+                {% if current_user.role == 'admin' or (current_user.role == 'student' and current_user.student.id == student.id) %}
+                <form action="{{ url_for('documents.upload', student_id=student.id) }}" method="POST" enctype="multipart/form-data" class="row g-2 mb-4 p-3 border rounded bg-light">
+                    <div class="col-md-5">
+                        <input type="file" name="file" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="file_type" class="form-select">
+                            <option value="certificate">Academic Certificate</option>
+                            <option value="transcript">External Transcript</option>
+                            <option value="identity">Identification File</option>
+                            <option value="other">Other Attachment</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-info w-100 text-white"><i class="fa-solid fa-upload me-1"></i>Upload</button>
+                    </div>
+                </form>
+                {% endif %}
+
+                <!-- Document List -->
+                {% if student.documents %}
+                <ul class="list-group list-group-flush border rounded">
+                    {% for doc in student.documents %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="fs-3 text-info me-3">
+                                {% if doc.file_type == 'certificate' %}
+                                    <i class="fa-solid fa-award"></i>
+                                {% elif doc.file_type == 'identity' %}
+                                    <i class="fa-solid fa-id-card"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold text-dark">{{ doc.file_name }}</h6>
+                                <small class="text-muted text-capitalize">{{ doc.file_type }} | Uploaded: {{ doc.uploaded_at.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{{ url_for('documents.download', document_id=doc.id) }}" class="btn btn-outline-success btn-sm" target="_blank" title="Download file">
+                                <i class="fa-solid fa-download"></i>
+                            </a>
+                            
+                            {% if current_user.role == 'admin' or (current_user.role == 'student' and current_user.student.id == student.id) %}
+                            <form action="{{ url_for('documents.delete', document_id=doc.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this document from AWS/Local storage?');" style="display:inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete file">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fa-solid fa-folder-closed fs-3 mb-2"></i>
+                    <p class="mb-0">No certificates or transcripts have been uploaded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

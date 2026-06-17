@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Student Record | AWS Student Platform{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('students.index') }}" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left me-2"></i>Back to Students Registry</a>
+    <h2 class="fw-bold text-dark mt-2">Add New Student Profile</h2>
+    <p class="text-muted">Create a new student entry and login user account</p>
+</div>
+
+<div class="card bg-white shadow-sm max-width-container" style="max-width: 800px;">
+    <div class="card-body p-4">
+        <form action="{{ url_for('students.create') }}" method="POST" enctype="multipart/form-data">
+            
+            <h5 class="border-bottom pb-2 mb-3 text-secondary fw-semibold"><i class="fa-solid fa-user-lock me-2"></i>Account Access</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email Address *</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="name@domain.edu" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="password" class="form-label">Portal Password (Default if empty)</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Defaults to Student@123">
+                    <div class="form-text">Students will be prompted to reset their password upon initial login.</div>
+                </div>
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3 mt-4 text-secondary fw-semibold"><i class="fa-solid fa-address-card me-2"></i>Biographical Details</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="student_id" class="form-label">Student ID / Matric Code *</label>
+                    <input type="text" name="student_id" id="student_id" class="form-control" placeholder="e.g. STD-2026-0045" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="date_of_birth" class="form-label">Date of Birth *</label>
+                    <input type="date" name="date_of_birth" id="date_of_birth" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="first_name" class="form-label">First Name *</label>
+                    <input type="text" name="first_name" id="first_name" class="form-control" placeholder="William" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="last_name" class="form-label">Last Name *</label>
+                    <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Gates" required>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="gender" class="form-label">Gender</label>
+                    <select name="gender" id="gender" class="form-select">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input type="tel" name="phone" id="phone" class="form-control" placeholder="+1-555-0155">
+                </div>
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3 mt-4 text-secondary fw-semibold"><i class="fa-solid fa-graduation-cap me-2"></i>Academic Track</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="department" class="form-label">Department *</label>
+                    <input type="text" name="department" id="department" class="form-control" placeholder="e.g. Computer Science" value="Computer Science" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="program" class="form-label">Program/Degree *</label>
+                    <input type="text" name="program" id="program" class="form-control" placeholder="e.g. B.Sc. Cybersecurity" value="B.Sc. Cybersecurity" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="address" class="form-label">Residential Address</label>
+                <textarea name="address" id="address" class="form-control" rows="2" placeholder="Street Address, City, Zip Code"></textarea>
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3 mt-4 text-secondary fw-semibold"><i class="fa-regular fa-image me-2"></i>Profile Image</h5>
+            <div class="mb-4">
+                <label for="profile_photo" class="form-label">Select Photo (Max 16MB)</label>
+                <input type="file" name="profile_photo" id="profile_photo" class="form-control" accept="image/*">
+                <div class="form-text">Supported formats: JPEG, PNG, WEBP.</div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-4">
+                <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk me-2"></i>Save Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
