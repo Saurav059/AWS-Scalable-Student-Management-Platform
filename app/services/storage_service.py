@@ -110,12 +110,14 @@ class S3StorageService(StorageService):
 
 
 def get_storage_service(config) -> StorageService:
-    if config.STORAGE_TYPE == 's3':
+    storage_type = config.get('STORAGE_TYPE', 'local')
+
+    if storage_type == 's3':
         return S3StorageService(
-            aws_access_key=config.AWS_ACCESS_KEY_ID,
-            aws_secret_key=config.AWS_SECRET_ACCESS_KEY,
-            region=config.AWS_REGION,
-            bucket_name=config.S3_BUCKET_NAME
+            aws_access_key=config.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_key=config.get('AWS_SECRET_ACCESS_KEY'),
+            region=config.get('AWS_REGION', 'us-east-1'),
+            bucket_name=config.get('S3_BUCKET_NAME')
         )
     else:
-        return LocalStorageService(upload_folder=config.UPLOAD_FOLDER)
+        return LocalStorageService(upload_folder=config.get('UPLOAD_FOLDER'))
